@@ -56,10 +56,10 @@ export default function PoseList() {
 
       {/* Header */}
       <div className="flex items-center justify-between pt-2 mb-4">
-        <h1 className="text-2xl font-black text-zinc-100 tracking-tight">Katalog ćwiczeń</h1>
+        <h1 className="text-2xl font-heading font-semibold text-ink tracking-tight">Katalog ćwiczeń</h1>
         <button
           onClick={() => setShowAdd(true)}
-          className="px-4 py-2 rounded-xl bg-lime-400 text-black font-bold text-sm hover:bg-lime-300 transition-colors"
+          className="px-4 py-2 rounded-xl bg-accent text-accent-contrast font-semibold text-sm hover:bg-accent/90 transition-colors"
         >
           + Dodaj
         </button>
@@ -74,50 +74,50 @@ export default function PoseList() {
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
-        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-lime-400 transition-colors mb-5"
+        className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-ink placeholder-ink-muted outline-none focus:border-accent transition-colors mb-5"
       />
 
       {/* States */}
-      {loading && <p className="text-zinc-500 text-sm text-center py-10">Ładowanie…</p>}
-      {error   && <p className="text-red-400 text-sm text-center py-10">{error}</p>}
+      {loading && <p className="text-ink-muted text-sm text-center py-10">Ładowanie…</p>}
+      {error   && <p className="text-danger text-sm text-center py-10">{error}</p>}
 
       {/* List */}
       {!loading && !error && (
         filtered.length === 0 ? (
-          <p className="text-zinc-500 text-sm text-center py-10">Brak pozycji.</p>
+          <p className="text-ink-muted text-sm text-center py-10">Brak pozycji.</p>
         ) : (
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filtered.map((pose) => (
               <li
                 key={pose.id}
-                className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden flex flex-col"
+                className="bg-surface border border-border rounded-xl overflow-hidden flex flex-col"
               >
-                <div className="aspect-square bg-zinc-800">
+                <div className="aspect-square bg-surface-hover">
                   {pose.image_url ? (
                     <img src={pose.image_url} alt={pose.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-600 text-3xl">
+                    <div className="w-full h-full flex items-center justify-center text-ink-muted text-3xl">
                       🧘
                     </div>
                   )}
                 </div>
                 <div className="p-3 flex flex-col gap-2 flex-1">
-                  <span className="text-sm font-semibold text-zinc-100 truncate" title={pose.name}>
+                  <span className="text-sm font-semibold text-ink truncate" title={pose.name}>
                     {pose.name}
                   </span>
                   {pose.description && (
-                    <p className="text-xs text-zinc-500 line-clamp-2">{pose.description}</p>
+                    <p className="text-xs text-ink-muted line-clamp-2">{pose.description}</p>
                   )}
                   <div className="flex items-center gap-1.5 mt-auto pt-1">
                     <button
                       onClick={() => setEditPose(pose)}
-                      className="flex-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2.5 py-1.5 rounded-lg font-medium transition-colors"
+                      className="flex-1 text-xs bg-surface-hover hover:bg-border text-ink-muted px-2.5 py-1.5 rounded-lg font-medium transition-colors"
                     >
                       Edytuj
                     </button>
                     <button
                       onClick={() => { setDeletingPose(pose); setDeleteErr(null); }}
-                      className="text-xs text-red-400 hover:text-red-300 px-2 py-1.5 transition-colors"
+                      className="text-xs text-danger hover:text-danger/80 px-2 py-1.5 transition-colors"
                     >
                       Usuń
                     </button>
@@ -142,24 +142,24 @@ export default function PoseList() {
       {/* Delete confirm modal */}
       {deletingPose && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-xs w-full">
-            <p className="text-sm font-semibold text-zinc-100 mb-1">Usunąć pozycję?</p>
-            <p className="text-xs text-zinc-500 mb-3">
-              <span className="text-zinc-300">"{deletingPose.name}"</span> zostanie trwale usunięta.
+          <div className="bg-surface border border-border rounded-2xl p-6 max-w-xs w-full">
+            <p className="text-sm font-heading font-semibold text-ink mb-1">Usunąć pozycję?</p>
+            <p className="text-xs text-ink-muted mb-3">
+              <span className="text-ink">"{deletingPose.name}"</span> zostanie trwale usunięta.
             </p>
-            {deleteErr && <p className="text-xs text-red-400 mb-3">{deleteErr}</p>}
+            {deleteErr && <p className="text-xs text-danger mb-3">{deleteErr}</p>}
             <div className="flex gap-3">
               <button
                 onClick={() => { setDeletingPose(null); setDeleteErr(null); }}
                 disabled={isDeleting}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-800 text-zinc-300 text-sm font-semibold disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-surface-hover text-ink-muted text-sm font-semibold disabled:opacity-50"
               >
                 Anuluj
               </button>
               <button
                 onClick={() => handleDeletePose(deletingPose.id)}
                 disabled={isDeleting}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-semibold disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-danger text-white text-sm font-semibold disabled:opacity-50"
               >
                 {isDeleting ? 'Usuwanie…' : 'Usuń'}
               </button>

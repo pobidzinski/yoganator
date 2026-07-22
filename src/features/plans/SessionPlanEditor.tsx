@@ -38,36 +38,36 @@ function DraftItemRow({
     <div
       data-sortable-row
       className={[
-        'flex items-center gap-2 px-3 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700',
-        isDragging ? 'ring-2 ring-lime-400 shadow-lg shadow-black/40' : '',
+        'flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface-hover border border-border',
+        isDragging ? 'ring-2 ring-accent shadow-lg shadow-black/40' : '',
       ].join(' ')}
     >
       {/* Drag handle */}
       <span
-        className="w-5 shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none text-zinc-500 hover:text-zinc-300"
+        className="w-5 shrink-0 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none text-ink-muted hover:text-ink"
         {...dragHandleProps}
       >
         ⠿
       </span>
 
       {/* Thumbnail */}
-      <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-700 shrink-0">
+      <div className="w-10 h-10 rounded-lg overflow-hidden bg-border shrink-0">
         {item.pose.image_url ? (
           <img src={item.pose.image_url} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-zinc-500 text-lg">🧘</div>
+          <div className="w-full h-full flex items-center justify-center text-ink-muted text-lg">🧘</div>
         )}
       </div>
 
       {/* Name */}
       <div className="min-w-0 flex-1">
-        <span className="text-[10px] text-zinc-500 font-semibold">#{index + 1}</span>
-        <p className="text-sm font-medium text-zinc-100 truncate">{item.pose.name}</p>
+        <span className="text-[10px] text-ink-muted font-semibold">#{index + 1}</span>
+        <p className="text-sm font-medium text-ink truncate">{item.pose.name}</p>
       </div>
 
       {/* Prep seconds */}
       <div className="flex flex-col items-center gap-0.5 shrink-0">
-        <label className="text-[9px] text-zinc-500 uppercase tracking-wide">Przyg.</label>
+        <label className="text-[9px] text-ink-muted uppercase tracking-wide">Przyg.</label>
         <input
           type="number"
           inputMode="numeric"
@@ -75,13 +75,13 @@ function DraftItemRow({
           max={600}
           value={item.prepSeconds}
           onChange={(e) => onChange({ prepSeconds: Math.max(0, Number(e.target.value) || 0) })}
-          className="w-14 bg-zinc-700 border border-zinc-600 rounded-lg px-1.5 py-1 text-xs text-zinc-100 text-center outline-none focus:border-lime-400 transition-colors"
+          className="w-14 bg-bg border border-border rounded-lg px-1.5 py-1 text-xs text-ink text-center outline-none focus:border-accent transition-colors"
         />
       </div>
 
       {/* Hold seconds */}
       <div className="flex flex-col items-center gap-0.5 shrink-0">
-        <label className="text-[9px] text-zinc-500 uppercase tracking-wide">Trwanie</label>
+        <label className="text-[9px] text-ink-muted uppercase tracking-wide">Trwanie</label>
         <input
           type="number"
           inputMode="numeric"
@@ -89,14 +89,14 @@ function DraftItemRow({
           max={1200}
           value={item.holdSeconds}
           onChange={(e) => onChange({ holdSeconds: Math.max(1, Number(e.target.value) || 1) })}
-          className="w-14 bg-zinc-700 border border-zinc-600 rounded-lg px-1.5 py-1 text-xs text-zinc-100 text-center outline-none focus:border-lime-400 transition-colors"
+          className="w-14 bg-bg border border-border rounded-lg px-1.5 py-1 text-xs text-ink text-center outline-none focus:border-accent transition-colors"
         />
       </div>
 
       {/* Remove */}
       <button
         onClick={onRemove}
-        className="w-6 h-6 flex items-center justify-center text-zinc-600 hover:text-red-400 transition-colors text-lg leading-none shrink-0"
+        className="w-6 h-6 flex items-center justify-center text-ink-muted hover:text-danger transition-colors text-lg leading-none shrink-0"
       >
         ×
       </button>
@@ -237,7 +237,7 @@ export default function SessionPlanEditor({ planId, onBack, onSaved }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-full">
-        <p className="text-zinc-500 text-sm">Ładowanie…</p>
+        <p className="text-ink-muted text-sm">Ładowanie…</p>
       </div>
     );
   }
@@ -248,17 +248,17 @@ export default function SessionPlanEditor({ planId, onBack, onSaved }: Props) {
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-zinc-100 text-xl transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-ink-muted hover:text-ink text-xl transition-colors"
         >
           ←
         </button>
-        <h1 className="text-xl font-black text-zinc-100 tracking-tight flex-1">
+        <h1 className="text-xl font-heading font-semibold text-ink tracking-tight flex-1">
           {isNew ? 'Nowy plan' : 'Edytuj plan'}
         </h1>
         {!isNew && (
           <button
             onClick={handleDelete}
-            className="text-xs bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            className="text-xs bg-danger hover:bg-danger/90 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
           >
             Usuń
           </button>
@@ -267,7 +267,7 @@ export default function SessionPlanEditor({ planId, onBack, onSaved }: Props) {
 
       {/* Name */}
       <div className="flex flex-col gap-1">
-        <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">
+        <label className="text-[11px] font-semibold text-ink-muted uppercase tracking-wide">
           Nazwa *
         </label>
         <input
@@ -275,13 +275,13 @@ export default function SessionPlanEditor({ planId, onBack, onSaved }: Props) {
           placeholder="np. Poranna sesja"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-lime-400 transition-colors"
+          className="bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-ink placeholder-ink-muted outline-none focus:border-accent transition-colors"
         />
       </div>
 
       {/* Description */}
       <div className="flex flex-col gap-1">
-        <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">
+        <label className="text-[11px] font-semibold text-ink-muted uppercase tracking-wide">
           Opis
         </label>
         <input
@@ -289,20 +289,20 @@ export default function SessionPlanEditor({ planId, onBack, onSaved }: Props) {
           placeholder="Opcjonalna notatka…"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-lime-400 transition-colors"
+          className="bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-ink placeholder-ink-muted outline-none focus:border-accent transition-colors"
         />
       </div>
 
       {/* Items */}
       <div className="flex flex-col gap-2">
-        <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide">
+        <p className="text-[11px] font-semibold text-ink-muted uppercase tracking-wide">
           Pozycje ({draftItems.length})
         </p>
         <div className="flex flex-col gap-2">
           {draftItems.map((item, i) => (
             <Fragment key={item.localId}>
               {dragging !== null && over === i && over < dragging && (
-                <div className="h-1 mx-2 rounded-full bg-lime-400 shadow-[0_0_8px_4px_rgba(163,230,53,0.5)]" />
+                <div className="h-1 mx-2 rounded-full bg-accent shadow-[0_0_8px_4px_rgba(180,140,255,0.5)]" />
               )}
               <DraftItemRow
                 index={i}
@@ -313,21 +313,21 @@ export default function SessionPlanEditor({ planId, onBack, onSaved }: Props) {
                 isDragging={dragging === i}
               />
               {dragging !== null && over === i && over > dragging && (
-                <div className="h-1 mx-2 rounded-full bg-lime-400 shadow-[0_0_8px_4px_rgba(163,230,53,0.5)]" />
+                <div className="h-1 mx-2 rounded-full bg-accent shadow-[0_0_8px_4px_rgba(180,140,255,0.5)]" />
               )}
             </Fragment>
           ))}
         </div>
         <button
           onClick={() => setShowPicker(true)}
-          className="w-full py-3 rounded-xl border border-dashed border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-colors text-sm font-medium"
+          className="w-full py-3 rounded-xl border border-dashed border-border text-ink-muted hover:text-ink hover:border-accent/40 transition-colors text-sm font-medium"
         >
           + Dodaj pozycję
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-950 border border-red-800 rounded-lg px-3 py-2 text-sm text-red-300">
+        <div className="bg-danger/10 border border-danger/30 rounded-lg px-3 py-2 text-sm text-danger">
           {error}
         </div>
       )}
@@ -336,7 +336,7 @@ export default function SessionPlanEditor({ planId, onBack, onSaved }: Props) {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full py-3 rounded-xl bg-lime-400 text-black font-bold text-sm hover:bg-lime-300 disabled:opacity-50 transition-colors"
+        className="w-full py-3 rounded-xl bg-accent text-accent-contrast font-semibold text-sm hover:bg-accent/90 disabled:opacity-50 transition-colors"
       >
         {saving ? 'Zapisywanie…' : 'Zapisz plan'}
       </button>

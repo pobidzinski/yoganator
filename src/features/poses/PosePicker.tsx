@@ -31,17 +31,17 @@ export default function PosePicker({ onSelect, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex flex-col justify-end" style={{ paddingBottom: kbOffset }}>
-      <div className="bg-zinc-900 rounded-t-2xl flex flex-col max-h-[82dvh]">
+      <div className="bg-surface rounded-t-2xl flex flex-col max-h-[82dvh]">
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-zinc-700" />
+          <div className="w-10 h-1 rounded-full bg-border" />
         </div>
 
         <div className="flex items-center justify-between px-4 pb-2">
-          <h2 className="text-base font-semibold text-zinc-100">Dodaj pozycję</h2>
+          <h2 className="text-base font-heading font-semibold text-ink">Dodaj pozycję</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors text-xl leading-none"
+            className="w-8 h-8 flex items-center justify-center text-ink-muted hover:text-ink transition-colors text-xl leading-none"
           >
             ×
           </button>
@@ -57,37 +57,37 @@ export default function PosePicker({ onSelect, onClose }: Props) {
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:border-lime-400 transition-colors"
+            className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-sm text-ink placeholder-ink-muted outline-none focus:border-accent transition-colors"
           />
         </div>
 
-        <ul className="overflow-y-auto flex-1 divide-y divide-zinc-800">
+        <ul className="overflow-y-auto flex-1 divide-y divide-border">
           {loading && (
-            <li className="py-10 text-center text-zinc-500 text-sm">Ładowanie…</li>
+            <li className="py-10 text-center text-ink-muted text-sm">Ładowanie…</li>
           )}
           {!loading && error && (
-            <li className="py-10 text-center text-red-400 text-sm px-4">{error}</li>
+            <li className="py-10 text-center text-danger text-sm px-4">{error}</li>
           )}
           {!loading && !error && filtered.length === 0 && (
-            <li className="py-10 text-center text-zinc-500 text-sm">Brak pozycji.</li>
+            <li className="py-10 text-center text-ink-muted text-sm">Brak pozycji.</li>
           )}
           {filtered.map((pose) => (
             <li key={pose.id}>
               <button
                 onClick={() => { onSelect(pose); onClose(); }}
-                className="w-full flex items-center gap-3 text-left px-4 py-2.5 hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-3 text-left px-4 py-2.5 hover:bg-surface-hover transition-colors"
               >
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-surface-hover shrink-0">
                   {pose.image_url ? (
                     <img src={pose.image_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-600 text-lg">🧘</div>
+                    <div className="w-full h-full flex items-center justify-center text-ink-muted text-lg">🧘</div>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-medium text-zinc-100 truncate">{pose.name}</div>
+                  <div className="text-sm font-medium text-ink truncate">{pose.name}</div>
                   {pose.description && (
-                    <div className="text-xs text-zinc-500 mt-0.5 truncate">{pose.description}</div>
+                    <div className="text-xs text-ink-muted mt-0.5 truncate">{pose.description}</div>
                   )}
                 </div>
               </button>

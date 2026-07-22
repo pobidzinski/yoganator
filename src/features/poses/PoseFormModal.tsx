@@ -113,25 +113,25 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
     onSaved();
   }
 
-  const inputCls = 'w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-100 outline-none focus:border-lime-400 transition-colors';
+  const inputCls = 'w-full bg-surface-hover border border-border rounded-xl px-3 py-2.5 text-sm text-ink outline-none focus:border-accent transition-colors';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex flex-col justify-end" style={{ paddingBottom: kbOffset }}>
-      <div className="bg-zinc-900 rounded-t-2xl flex flex-col max-h-[92dvh]">
+      <div className="bg-surface rounded-t-2xl flex flex-col max-h-[92dvh]">
 
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-zinc-700" />
+          <div className="w-10 h-1 rounded-full bg-border" />
         </div>
 
         {/* Header */}
         <div className="flex items-center justify-between px-4 pb-3 shrink-0">
-          <h2 className="text-base font-bold text-zinc-100">
+          <h2 className="text-base font-heading font-semibold text-ink">
             {mode === 'edit' ? 'Edytuj pozycję' : 'Nowa pozycja'}
           </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center text-zinc-400 hover:text-zinc-100 transition-colors text-xl leading-none"
+            className="w-8 h-8 flex items-center justify-center text-ink-muted hover:text-ink transition-colors text-xl leading-none"
           >
             ×
           </button>
@@ -142,7 +142,7 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
 
           {/* Photo */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
+            <label className="text-[11px] font-bold text-ink-muted uppercase tracking-widest">
               Zdjęcie
             </label>
             <input
@@ -152,11 +152,11 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
               onChange={handleFileChange}
               className="hidden"
             />
-            <div className="relative w-full aspect-square max-w-[220px] rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700">
+            <div className="relative w-full aspect-square max-w-[220px] rounded-xl overflow-hidden bg-surface-hover border border-border">
               {form.imagePreviewUrl ? (
                 <img src={form.imagePreviewUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-600 text-4xl">
+                <div className="w-full h-full flex items-center justify-center text-ink-muted text-4xl">
                   🧘
                 </div>
               )}
@@ -172,7 +172,7 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
               <button
                 type="button"
                 onClick={handleRemovePhoto}
-                className="text-xs text-red-400 hover:text-red-300 transition-colors self-start"
+                className="text-xs text-danger hover:text-danger/80 transition-colors self-start"
               >
                 Usuń zdjęcie
               </button>
@@ -181,7 +181,7 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
 
           {/* Name */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
+            <label className="text-[11px] font-bold text-ink-muted uppercase tracking-widest">
               Nazwa *
             </label>
             <input
@@ -196,7 +196,7 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
 
           {/* Description */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">
+            <label className="text-[11px] font-bold text-ink-muted uppercase tracking-widest">
               Opis
             </label>
             <textarea
@@ -210,7 +210,7 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
 
           {/* Error */}
           {error && (
-            <div className="bg-red-950 border border-red-800 rounded-xl px-4 py-3 text-sm text-red-300">
+            <div className="bg-danger/10 border border-danger/30 rounded-xl px-4 py-3 text-sm text-danger">
               {error}
             </div>
           )}
@@ -219,7 +219,7 @@ export default function PoseFormModal({ mode, pose, onClose, onSaved }: Props) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-3 rounded-xl bg-lime-400 text-black font-bold text-sm hover:bg-lime-300 disabled:opacity-50 transition-colors"
+            className="w-full py-3 rounded-xl bg-accent text-accent-contrast font-semibold text-sm hover:bg-accent/90 disabled:opacity-50 transition-colors"
           >
             {saving ? 'Zapisywanie…' : mode === 'edit' ? 'Zapisz zmiany' : 'Zapisz pozycję'}
           </button>

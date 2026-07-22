@@ -66,8 +66,17 @@ zmiana w bazie = nowy plik migracji.
 
 ## Coding Rules
 
-- Tailwind only, dark theme (`zinc-950`/`zinc-900`/`zinc-800`, akcent
-  `lime-400`) — bez CSS-in-JS, bez bibliotek komponentów.
+- Tailwind only, dark theme "Dusk Lavender" — bez CSS-in-JS, bez bibliotek
+  komponentów. Kolory jako semantyczne tokeny (`tailwind.config.js`
+  `theme.extend.colors`, wartości w `:root` w `src/index.css`): `bg`,
+  `surface`, `surface-hover`, `border`, `ink`, `ink-muted`, `accent`,
+  `accent-contrast`, `accent-2`, `danger` — nie używać już surowych klas
+  `zinc-*`/`lime-*`/`red-*` w nowym kodzie. Nagłówki i duże liczby (timer)
+  używają `font-heading` (Fraunces, serif, ładowany przez Google Fonts w
+  `index.html`), reszta tekstu domyślnego `font-sans` (Inter). `rounded-xl`/
+  `rounded-2xl` mają podbite wartości (20px/28px) w konfiguracji Tailwind dla
+  miękkiego, "jogowego" kształtu — nie nadpisywać ręcznie promieni per
+  element.
 - Zwykły `useState` + `useEffect` fetch + ręczny refetch po mutacji dla CRUD
   (poses, plans) — bez React Query/SWR. Store Zustand tylko dla stanu runtime
   treningu.

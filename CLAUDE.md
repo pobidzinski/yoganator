@@ -27,6 +27,8 @@ src/
     plans/      Planowanie sesji — SessionPlansPage, SessionPlanEditor
     training/   Trening — trainingEngine.ts (czyste funkcje), trainingStore.ts (Zustand),
                 TrainingPage/TrainingSelectScreen/TrainingRunnerScreen
+    retention/  Semen retention — retentionEngine.ts (czyste funkcje: model 5 faz),
+                RetentionPage (licznik + podsumowanie fazy), RetentionResetModal
 ```
 
 ## Key Business Rules
@@ -54,15 +56,22 @@ src/
   semantyki "wznów po nieznanej przerwie"; reload = restart od wyboru planu.
 - Usunięcie pozycji użytej w planie: FK `ON DELETE RESTRICT` — UI łapie błąd
   `23503` i pokazuje komunikat zamiast pozwolić na niespójne dane.
+- Semen retention (`retentionEngine.ts`): model 5 faz liczonych od
+  `last_reset_at` w dniach od zera (`elapsedDays`) — regeneracja (0–4),
+  równowaga (4–9), doładowanie (9–14), bezwysiłkowa (14–90), wzniesienie
+  (90+, bez górnej granicy — progress bar i "dni do końca fazy" wtedy się nie
+  renderują). Licznik w `RetentionPage` jest lokalnym `setInterval` co 1s
+  (bez Zustand — to prosty zegar, nie sekwencer z pauzą/wznowieniem).
 
 ## Database
 
 Tabele: `poses` (name, description, image_url), `session_plans` (name,
 description), `session_plan_items` (session_plan_id, pose_id, position,
-prep_seconds, hold_seconds). Bucket Storage `pose-images` (publiczny, z
-jawnymi politykami RLS na `storage.objects`). Migracje w
-`supabase/migrations/`, uruchamiane ręcznie przez Supabase SQL editor — każda
-zmiana w bazie = nowy plik migracji.
+prep_seconds, hold_seconds), `retention_status` (last_reset_at, updated_at —
+pojedynczy wiersz, nadpisywany UPDATE-em, nie appendowany jako log). Bucket
+Storage `pose-images` (publiczny, z jawnymi politykami RLS na
+`storage.objects`). Migracje w `supabase/migrations/`, uruchamiane ręcznie
+przez Supabase SQL editor — każda zmiana w bazie = nowy plik migracji.
 
 ## Coding Rules
 

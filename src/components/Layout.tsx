@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/plans',    label: 'Plany',     icon: '📋' },
   { to: '/training', label: 'Trening',   icon: '▶️' },
   { to: '/retention', label: 'Retencja', icon: '🔥' },
+  { to: '/calendar', label: 'Kalendarz', icon: '📅' },
 ] as const;
 
 export default function Layout() {

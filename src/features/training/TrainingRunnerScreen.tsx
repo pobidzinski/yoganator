@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { unlockAudio } from '../../lib/audio';
+import { supabase } from '../../lib/supabase';
 import { formatSeconds } from '../../lib/time';
 import { useTrainingStore } from './trainingStore';
 
 const TICK_MS = 250;
 
 export default function TrainingRunnerScreen() {
+  const planId = useTrainingStore((s) => s.planId);
   const planName = useTrainingStore((s) => s.planName);
   const steps = useTrainingStore((s) => s.steps);
   const stepIndex = useTrainingStore((s) => s.stepIndex);
@@ -45,6 +47,22 @@ export default function TrainingRunnerScreen() {
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
+
+  // Logs one row per finished run, for the calendar view — guarded by a ref
+  // since `phase` stays 'finished' across re-renders until reset()/loadPlan().
+  const loggedFinishRef = useRef(false);
+  useEffect(() => {
+    if (phase !== 'finished') {
+      loggedFinishRef.current = false;
+      return;
+    }
+    if (loggedFinishRef.current) return;
+    loggedFinishRef.current = true;
+    supabase
+      .from('training_logs')
+      .insert({ session_plan_id: planId, completed_at: new Date().toISOString() })
+      .then(({ error }) => { if (error) console.error(error); });
+  }, [phase, planId]);
 
   function handleStart() {
     unlockAudio();

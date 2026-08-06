@@ -29,6 +29,9 @@ src/
                 TrainingPage/TrainingSelectScreen/TrainingRunnerScreen
     retention/  Semen retention — retentionEngine.ts (czyste funkcje: model 5 faz),
                 RetentionPage (licznik + podsumowanie fazy), RetentionResetModal
+    calendar/   Kalendarz treningów — calendarEngine.ts (czyste funkcje: siatka
+                miesiąca, tydzień od poniedziałku), CalendarPage (miesiąc +
+                podsumowanie tygodnia)
 ```
 
 ## Key Business Rules
@@ -62,13 +65,20 @@ src/
   (90+, bez górnej granicy — progress bar i "dni do końca fazy" wtedy się nie
   renderują). Licznik w `RetentionPage` jest lokalnym `setInterval` co 1s
   (bez Zustand — to prosty zegar, nie sekwencer z pauzą/wznowieniem).
+- Kalendarz treningów: `TrainingRunnerScreen` zapisuje jeden wiersz do
+  `training_logs` (`session_plan_id`, `completed_at`) w momencie wejścia w
+  fazę `finished` (guard przez `useRef`, żeby nie zdublować wpisu przy
+  re-renderach). `CalendarPage` czyta cały log i liczy dni/tydzień lokalnie —
+  brak agregacji po stronie bazy.
 
 ## Database
 
 Tabele: `poses` (name, description, image_url), `session_plans` (name,
 description), `session_plan_items` (session_plan_id, pose_id, position,
 prep_seconds, hold_seconds), `retention_status` (last_reset_at, updated_at —
-pojedynczy wiersz, nadpisywany UPDATE-em, nie appendowany jako log). Bucket
+pojedynczy wiersz, nadpisywany UPDATE-em, nie appendowany jako log),
+`training_logs` (session_plan_id `ON DELETE SET NULL`, completed_at — jeden
+wiersz na ukończony trening, źródło danych dla kalendarza). Bucket
 Storage `pose-images` (publiczny, z jawnymi politykami RLS na
 `storage.objects`). Migracje w `supabase/migrations/`, uruchamiane ręcznie
 przez Supabase SQL editor — każda zmiana w bazie = nowy plik migracji.

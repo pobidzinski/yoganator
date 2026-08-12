@@ -1,17 +1,19 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTrainingStore } from '../features/training/trainingStore';
 
 const NAV_ITEMS = [
   { to: '/poses',    label: 'Ćwiczenia', icon: '🧘' },
   { to: '/plans',    label: 'Plany',     icon: '📋' },
   { to: '/training', label: 'Trening',   icon: '▶️' },
-  { to: '/retention', label: 'Retencja', icon: '🔥' },
-  { to: '/calendar', label: 'Kalendarz', icon: '📅' },
+  { to: '/trackers', label: 'Trackery',  icon: '📊' },
 ] as const;
+
+const TRACKER_PATHS = ['/trackers', '/retention', '/calendar'];
 
 export default function Layout() {
   const phase = useTrainingStore((s) => s.phase);
   const isTrainingActive = phase === 'prep' || phase === 'hold';
+  const location = useLocation();
 
   return (
     <div className="flex h-svh bg-bg text-ink">
@@ -22,24 +24,27 @@ export default function Layout() {
           <span className="text-lg font-heading font-semibold tracking-tight text-accent">Yoganator</span>
         </div>
         <nav className="flex flex-col gap-0.5 p-3 flex-1">
-          {NAV_ITEMS.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                [
+          {NAV_ITEMS.map(({ to, label, icon }) => {
+            const isActive = to === '/trackers'
+              ? TRACKER_PATHS.includes(location.pathname)
+              : location.pathname === to;
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                className={[
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-surface-hover text-accent'
                     : 'text-ink-muted hover:bg-surface-hover/60 hover:text-ink',
                   to === '/training' && isTrainingActive ? 'ring-1 ring-danger/70' : '',
-                ].join(' ')
-              }
-            >
-              <span className="text-base leading-none">{icon}</span>
-              {label}
-            </NavLink>
-          ))}
+                ].join(' ')}
+              >
+                <span className="text-base leading-none">{icon}</span>
+                {label}
+              </NavLink>
+            );
+          })}
         </nav>
       </aside>
 
@@ -51,24 +56,27 @@ export default function Layout() {
 
         {/* Bottom navigation — mobile only */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface/95 backdrop-blur border-t border-border flex justify-around items-center h-16 px-2 z-40">
-          {NAV_ITEMS.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                [
+          {NAV_ITEMS.map(({ to, label, icon }) => {
+            const isActive = to === '/trackers'
+              ? TRACKER_PATHS.includes(location.pathname)
+              : location.pathname === to;
+            return (
+              <NavLink
+                key={to}
+                to={to}
+                className={[
                   'flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl min-w-0 transition-colors',
                   isActive
                     ? 'bg-surface-hover text-accent'
                     : 'text-ink-muted hover:text-ink',
                   to === '/training' && isTrainingActive ? 'ring-1 ring-danger/70' : '',
-                ].join(' ')
-              }
-            >
-              <span className="text-lg leading-none">{icon}</span>
-              <span className="text-[10px] font-medium leading-none">{label}</span>
-            </NavLink>
-          ))}
+                ].join(' ')}
+              >
+                <span className="text-lg leading-none">{icon}</span>
+                <span className="text-[10px] font-medium leading-none">{label}</span>
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
 

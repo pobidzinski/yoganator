@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { to: '/trackers', label: 'Trackery',  icon: '📊' },
 ] as const;
 
-const TRACKER_PATHS = ['/trackers', '/retention', '/calendar'];
+const TRACKER_PATHS = ['/trackers', '/retention', '/calendar', '/kegel'];
 
 export default function Layout() {
   const phase = useTrainingStore((s) => s.phase);

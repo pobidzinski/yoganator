@@ -6,6 +6,7 @@ import TrainingPage from './features/training/TrainingPage';
 import RetentionPage from './features/retention/RetentionPage';
 import CalendarPage from './features/calendar/CalendarPage';
 import TrackersPage from './features/trackers/TrackersPage';
+import KegelPage from './features/kegel/KegelPage';
 
 function AppRoutes() {
   return (
@@ -18,6 +19,7 @@ function AppRoutes() {
         <Route path="/trackers" element={<TrackersPage />} />
         <Route path="/retention" element={<RetentionPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
+        <Route path="/kegel" element={<KegelPage />} />
       </Route>
     </Routes>
   );

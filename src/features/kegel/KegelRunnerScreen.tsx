@@ -12,6 +12,7 @@ const RELAX_KINDS = new Set(['relax', 'elevatorRelax']);
 
 export default function KegelRunnerScreen() {
   const levelNumber = useKegelStore((s) => s.levelNumber);
+  const sessionType = useKegelStore((s) => s.sessionType);
   const steps = useKegelStore((s) => s.steps);
   const stepIndex = useKegelStore((s) => s.stepIndex);
   const status = useKegelStore((s) => s.status);
@@ -61,9 +62,9 @@ export default function KegelRunnerScreen() {
     loggedFinishRef.current = true;
     supabase
       .from('kegel_logs')
-      .insert({ level: levelNumber, completed_at: new Date().toISOString() })
+      .insert({ level: levelNumber, session_type: sessionType, completed_at: new Date().toISOString() })
       .then(({ error }) => { if (error) console.error(error); });
-  }, [status, levelNumber]);
+  }, [status, levelNumber, sessionType]);
 
   if (status === 'finished') {
     return (
@@ -71,7 +72,9 @@ export default function KegelRunnerScreen() {
         <div className="flex flex-col items-center justify-center flex-1 gap-5 text-center py-10">
           <p className="text-5xl">🎉</p>
           <p className="text-xl font-heading font-semibold text-ink">Trening ukończony!</p>
-          <p className="text-sm text-ink-muted">Poziom {levelNumber} zaliczony.</p>
+          <p className="text-sm text-ink-muted">
+            {sessionType === 'strength' ? 'Trening siłowy' : 'Trening endurance'} — poziom {levelNumber} zaliczony.
+          </p>
           <button
             onClick={reset}
             className="w-full py-3.5 rounded-2xl bg-accent text-accent-contrast font-semibold text-sm hover:bg-accent/90 transition-colors"
@@ -114,7 +117,7 @@ export default function KegelRunnerScreen() {
           ←
         </button>
         <h1 className="text-lg font-heading font-semibold text-ink tracking-tight truncate flex-1">
-          Kegel — poziom {levelNumber}
+          Kegel — {sessionType === 'strength' ? 'Siła' : 'Endurance'} — poziom {levelNumber}
         </h1>
       </div>
 
@@ -127,7 +130,8 @@ export default function KegelRunnerScreen() {
           <p className="text-lg font-bold text-ink">{currentStep.exerciseLabel}</p>
           {currentStep.repIndex > 0 && (
             <p className="text-xs text-ink-muted mt-1">
-              Seria {currentStep.setIndex}/{currentStep.totalSets} · Powt. {currentStep.repIndex}/{currentStep.totalReps}
+              Seria {currentStep.setIndex}/{currentStep.totalSets}
+              {currentStep.totalReps > 1 ? ` · Powt. ${currentStep.repIndex}/${currentStep.totalReps}` : ''}
             </p>
           )}
         </div>

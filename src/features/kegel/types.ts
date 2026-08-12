@@ -8,7 +8,9 @@ export type KegelStepKind =
   | 'setRest'
   | 'exerciseRest';
 
-export type KegelExerciseId = 'warmup' | 'fast' | 'long' | 'elevator';
+export type KegelExerciseId = 'warmup' | 'fast' | 'long' | 'elevator' | 'endurance';
+
+export type KegelSessionType = 'strength' | 'endurance';
 
 export interface KegelStep {
   exerciseId: KegelExerciseId;
@@ -28,10 +30,12 @@ export interface KegelLevelConfig {
   fast: { sets: number; reps: number };
   long: { sets: number; reps: number; tensionSec: number };
   elevator: { sets: number; reps: number; stageHoldSec: number };
+  endurance: { sets: number; holdSec: number };
 }
 
 export interface KegelLog {
   id: string;
   level: number;
+  session_type: KegelSessionType;
   completed_at: string;
 }

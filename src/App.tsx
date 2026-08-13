@@ -7,6 +7,7 @@ import RetentionPage from './features/retention/RetentionPage';
 import CalendarPage from './features/calendar/CalendarPage';
 import TrackersPage from './features/trackers/TrackersPage';
 import KegelPage from './features/kegel/KegelPage';
+import WeightPage from './features/weight/WeightPage';
 
 function AppRoutes() {
   return (
@@ -20,6 +21,7 @@ function AppRoutes() {
         <Route path="/retention" element={<RetentionPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/kegel" element={<KegelPage />} />
+        <Route path="/weight" element={<WeightPage />} />
       </Route>
     </Routes>
   );

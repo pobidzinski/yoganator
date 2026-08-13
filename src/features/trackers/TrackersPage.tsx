@@ -4,6 +4,7 @@ const TRACKERS = [
   { to: '/retention', label: 'Retencja', description: 'Licznik dni i faza cyklu', icon: '🔥' },
   { to: '/calendar', label: 'Kalendarz', description: 'Historia i podsumowanie treningów', icon: '📅' },
   { to: '/kegel', label: 'Kegel', description: 'Trening mięśni dna miednicy', icon: '💪' },
+  { to: '/weight', label: 'Weight Log', description: 'Codzienna waga, trend EMA i średnia tygodniowa', icon: '⚖️' },
 ] as const;
 
 export default function TrackersPage() {

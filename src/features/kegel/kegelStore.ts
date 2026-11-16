@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { countdownBeep, finishChime, transitionTone } from '../../lib/audio';
 import { buildSteps } from './kegelEngine';
-import type { KegelLevelConfig, KegelSessionType, KegelStep } from './types';
+import type { KegelPhaseConfig, KegelStep } from './types';
 
 // Deliberately NOT wrapped in Zustand's `persist` — same reasoning as
 // trainingStore: a live countdown has no sensible "resume after an
@@ -10,8 +10,7 @@ import type { KegelLevelConfig, KegelSessionType, KegelStep } from './types';
 export type KegelStatus = 'idle' | 'active' | 'finished';
 
 interface KegelState {
-  levelNumber: number | null;
-  sessionType: KegelSessionType | null;
+  phaseNumber: number | null;
   steps: KegelStep[];
   stepIndex: number;
   status: KegelStatus;
@@ -20,7 +19,7 @@ interface KegelState {
   pausedRemainingMs: number | null; // captured at pause, re-based at resume
   lastAnnouncedSecond: number | null; // dedupes the 3/2/1 beep within a 250ms tick
 
-  start: (level: KegelLevelConfig, sessionType: KegelSessionType) => void;
+  start: (phase: KegelPhaseConfig) => void;
   pause: () => void;
   resume: () => void;
   reset: () => void;
@@ -28,8 +27,7 @@ interface KegelState {
 }
 
 export const useKegelStore = create<KegelState>((set, get) => ({
-  levelNumber: null,
-  sessionType: null,
+  phaseNumber: null,
   steps: [],
   stepIndex: 0,
   status: 'idle',
@@ -38,12 +36,11 @@ export const useKegelStore = create<KegelState>((set, get) => ({
   pausedRemainingMs: null,
   lastAnnouncedSecond: null,
 
-  start(level, sessionType) {
-    const steps = buildSteps(level, sessionType);
+  start(phase) {
+    const steps = buildSteps(phase);
     if (steps.length === 0) return;
     set({
-      levelNumber: level.level,
-      sessionType,
+      phaseNumber: phase.phase,
       steps,
       stepIndex: 0,
       status: 'active',
@@ -69,8 +66,7 @@ export const useKegelStore = create<KegelState>((set, get) => ({
 
   reset() {
     set({
-      levelNumber: null,
-      sessionType: null,
+      phaseNumber: null,
       steps: [],
       stepIndex: 0,
       status: 'idle',

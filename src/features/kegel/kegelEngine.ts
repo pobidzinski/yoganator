@@ -1,166 +1,168 @@
 // Pure functions for the Kegel trainer — no I/O, mirrors the trainingEngine.ts
-// / retentionEngine.ts pattern. Unlike trainingEngine (user-authored plans),
-// a level's program is fully deterministic, so the whole session is expanded
-// up front into a flat step list instead of a per-step state machine.
-import type { KegelExerciseId, KegelLevelConfig, KegelSessionType, KegelStep, KegelStepKind } from './types';
+// / retentionEngine.ts pattern. A phase's program is fully deterministic, so
+// the whole session is expanded up front into a flat step list instead of a
+// per-step state machine.
+//
+// Protocol: 12-week progressive PFMT (learning → strength → function →
+// maintenance). Relaxation is always at least as long as the contraction and
+// every series ends with reverse Kegel, to avoid pelvic-floor hypertonia
+// (relevant with heavy bracing / Valsalva in strength training). One session
+// per day, capped at MAX_DAILY_CONTRACTIONS.
+import { dateKey, startOfDay } from '../calendar/calendarEngine';
+import type { KegelExerciseId, KegelPhaseConfig, KegelPosition, KegelStep, KegelStepKind } from './types';
 
-export const SESSIONS_PER_LEVEL = 3;
+export const MAX_DAILY_CONTRACTIONS = 45;
 
-const WARMUP_REPS = 10;
-const WARMUP_TENSION_SEC = 3;
-const WARMUP_RELAX_SEC = 3;
-const SET_REST_SEC = 15;
-const EXERCISE_REST_SEC = 60;
-const LONG_RELAX_SEC = 10;
-const ELEVATOR_RELAX_SEC = 5;
+const SLOW_RELAX_SEC = 10;
 const FAST_TENSION_SEC = 1;
-const FAST_RELAX_SEC = 1;
-const ENDURANCE_RELAX_SEC = 5;
-const ENDURANCE_SET_REST_SEC = 60;
+const FAST_RELAX_SEC = 2;
+const REVERSE_REPS = 5;
+const REVERSE_INHALE_SEC = 6;
+const REVERSE_EXHALE_SEC = 4;
+const SERIES_REST_SEC = 20;
+
+export const KEGEL_PHASES: KegelPhaseConfig[] = [
+  { phase: 1, name: 'Nauka', seriesCount: 3, slow: { reps: 10, tensionSec: 5 }, fastReps: 0, positions: ['lying', 'lying', 'lying'] },
+  { phase: 2, name: 'Siła', seriesCount: 3, slow: { reps: 10, tensionSec: 8 }, fastReps: 5, positions: ['lying', 'sitting', 'standing'] },
+  { phase: 3, name: 'Funkcja', seriesCount: 3, slow: { reps: 10, tensionSec: 10 }, fastReps: 5, positions: ['standing', 'walking', 'squat'] },
+  { phase: 4, name: 'Utrzymanie', seriesCount: 1, slow: { reps: 10, tensionSec: 10 }, fastReps: 5, positions: ['standing'] },
+];
 
 /**
- * Progression toward the target program (level 6). Sets/reps/hold times ramp
- * up; rest durations and the warm-up stay fixed at every level. `strength`
- * (fast + long + elevator) and `endurance` (long submaximal holds) are
- * separate session types that alternate automatically — see
- * `getNextSessionType` — but share this single level/progression table.
+ * Entry conditions per phase: both the calendar week (counted from the first
+ * logged session) AND the number of distinct training days must be reached,
+ * so a break in training holds the phase instead of skipping ahead.
  */
-export const KEGEL_LEVELS: KegelLevelConfig[] = [
-  { level: 1, fast: { sets: 2, reps: 10 }, long: { sets: 2, reps: 6, tensionSec: 5 }, elevator: { sets: 1, reps: 4, stageHoldSec: 1.5 }, endurance: { sets: 2, holdSec: 20 } },
-  { level: 2, fast: { sets: 2, reps: 12 }, long: { sets: 2, reps: 7, tensionSec: 5 }, elevator: { sets: 1, reps: 5, stageHoldSec: 2 }, endurance: { sets: 2, holdSec: 30 } },
-  { level: 3, fast: { sets: 3, reps: 13 }, long: { sets: 2, reps: 8, tensionSec: 6 }, elevator: { sets: 1, reps: 6, stageHoldSec: 2 }, endurance: { sets: 2, holdSec: 40 } },
-  { level: 4, fast: { sets: 3, reps: 15 }, long: { sets: 3, reps: 8, tensionSec: 7 }, elevator: { sets: 2, reps: 6, stageHoldSec: 2.5 }, endurance: { sets: 3, holdSec: 45 } },
-  { level: 5, fast: { sets: 3, reps: 17 }, long: { sets: 3, reps: 9, tensionSec: 8 }, elevator: { sets: 2, reps: 7, stageHoldSec: 2.5 }, endurance: { sets: 3, holdSec: 50 } },
-  { level: 6, fast: { sets: 3, reps: 20 }, long: { sets: 3, reps: 10, tensionSec: 10 }, elevator: { sets: 2, reps: 8, stageHoldSec: 3 }, endurance: { sets: 3, holdSec: 60 } },
+export const KEGEL_PHASE_GATES: { phase: number; minWeek: number; minDays: number }[] = [
+  { phase: 2, minWeek: 3, minDays: 10 },
+  { phase: 3, minWeek: 7, minDays: 30 },
+  { phase: 4, minWeek: 13, minDays: 60 },
 ];
 
 export const KEGEL_STEP_KIND_LABELS: Record<KegelStepKind, string> = {
   tension: 'Napięcie',
   relax: 'Rozluźnienie',
-  stage1: 'Etap 1 (25%)',
-  stage2: 'Etap 2 (50%)',
-  stage3: 'Etap 3 (100%)',
-  elevatorRelax: 'Powolne rozluźnienie',
-  setRest: 'Przerwa między seriami',
-  exerciseRest: 'Przerwa między ćwiczeniami',
+  reverse: 'Wdech — opuść krocze',
+  exhale: 'Swobodny wydech',
+  setRest: 'Zmień pozycję',
 };
 
-/** Level for the number of already-completed Kegel sessions (both types combined); caps at (and stays on) the max level. */
-export function getLevelForSessionCount(completedSessions: number): KegelLevelConfig {
-  const index = Math.min(KEGEL_LEVELS.length - 1, Math.floor(completedSessions / SESSIONS_PER_LEVEL));
-  return KEGEL_LEVELS[index];
+export const KEGEL_POSITION_LABELS: Record<KegelPosition, string> = {
+  lying: '🛌 Leżenie na plecach',
+  sitting: '🪑 Siad',
+  standing: '🧍 Stanie',
+  walking: '🚶 Chód',
+  squat: '🏋️ Przysiad z masą ciała',
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export interface KegelProgress {
+  phase: KegelPhaseConfig;
+  /** 1-based week since the first logged session; 0 with no history. */
+  week: number;
+  trainingDays: number;
+  nextGate: { phase: number; minWeek: number; minDays: number } | null;
 }
 
-/** Sessions left to reach the next level; null once at the max level. */
-export function sessionsUntilNextLevel(completedSessions: number): number | null {
-  const index = Math.min(KEGEL_LEVELS.length - 1, Math.floor(completedSessions / SESSIONS_PER_LEVEL));
-  if (index >= KEGEL_LEVELS.length - 1) return null;
-  return (index + 1) * SESSIONS_PER_LEVEL - completedSessions;
+/** Derives the current phase from the completion log (any order). */
+export function getProgress(logs: { completed_at: string }[], now: Date): KegelProgress {
+  const days = new Set(logs.map((l) => dateKey(new Date(l.completed_at))));
+  const trainingDays = days.size;
+
+  let week = 0;
+  if (logs.length > 0) {
+    const firstMs = Math.min(...logs.map((l) => new Date(l.completed_at).getTime()));
+    const elapsedDays = Math.round((startOfDay(now).getTime() - startOfDay(new Date(firstMs)).getTime()) / DAY_MS);
+    week = Math.floor(elapsedDays / 7) + 1;
+  }
+
+  let phaseNumber = 1;
+  for (const gate of KEGEL_PHASE_GATES) {
+    if (week >= gate.minWeek && trainingDays >= gate.minDays) phaseNumber = gate.phase;
+    else break;
+  }
+
+  return {
+    phase: KEGEL_PHASES[phaseNumber - 1],
+    week,
+    trainingDays,
+    nextGate: KEGEL_PHASE_GATES.find((g) => g.phase === phaseNumber + 1) ?? null,
+  };
 }
 
-/** Strength and endurance are distinct training stimuli, so sessions alternate automatically rather than being combined or user-picked. Defaults to 'strength' with no history. */
-export function getNextSessionType(lastType: KegelSessionType | null): KegelSessionType {
-  return lastType === 'strength' ? 'endurance' : 'strength';
+/** One session per day — true when a session is already logged for today's local date. */
+export function hasSessionOn(logs: { completed_at: string }[], day: Date): boolean {
+  const key = dateKey(day);
+  return logs.some((l) => dateKey(new Date(l.completed_at)) === key);
 }
+
+export function contractionsPerSession(phase: KegelPhaseConfig): number {
+  return phase.seriesCount * (phase.slow.reps + phase.fastReps);
+}
+
+export function slowLabel(phase: KegelPhaseConfig): string {
+  return phase.phase === 1 ? 'Skurcze wolne' : 'Skurcze maksymalne';
+}
+export const FAST_LABEL = 'Szybkie skurcze';
+export const REVERSE_LABEL = 'Reverse Kegel — rozluźnienie';
 
 type RawStep = Omit<KegelStep, 'index' | 'total'>;
 
-function restStep(
-  exerciseId: KegelExerciseId,
-  exerciseLabel: string,
-  kind: 'setRest' | 'exerciseRest',
-  setIndex: number,
-  totalSets: number,
-  durationSec: number
-): RawStep {
-  return { exerciseId, exerciseLabel, kind, setIndex, totalSets, repIndex: 0, totalReps: 0, durationMs: durationSec * 1000 };
-}
-
-function pushSets(
+function pushReps(
   raw: RawStep[],
-  exerciseId: KegelExerciseId,
-  exerciseLabel: string,
-  totalSets: number,
+  base: { exerciseId: KegelExerciseId; exerciseLabel: string; position: KegelPosition; setIndex: number; totalSets: number },
   totalReps: number,
-  repKinds: { kind: KegelStepKind; durationMs: number }[],
-  setRestSec: number = SET_REST_SEC
+  repKinds: { kind: KegelStepKind; durationSec: number }[]
 ): void {
+  for (let rep = 1; rep <= totalReps; rep++) {
+    for (const { kind, durationSec } of repKinds) {
+      raw.push({ ...base, kind, repIndex: rep, totalReps, durationMs: durationSec * 1000 });
+    }
+  }
+}
+
+/** Expands a phase config into the full ordered list of steps for one session. */
+export function buildSteps(phase: KegelPhaseConfig): KegelStep[] {
+  const raw: RawStep[] = [];
+  const totalSets = phase.seriesCount;
+
   for (let set = 1; set <= totalSets; set++) {
-    for (let rep = 1; rep <= totalReps; rep++) {
-      for (const { kind, durationMs } of repKinds) {
-        raw.push({ exerciseId, exerciseLabel, kind, setIndex: set, totalSets, repIndex: rep, totalReps, durationMs });
-      }
+    const position = phase.positions[set - 1];
+    const base = { position, setIndex: set, totalSets };
+
+    pushReps(raw, { ...base, exerciseId: 'slow', exerciseLabel: slowLabel(phase) }, phase.slow.reps, [
+      { kind: 'tension', durationSec: phase.slow.tensionSec },
+      { kind: 'relax', durationSec: SLOW_RELAX_SEC },
+    ]);
+
+    if (phase.fastReps > 0) {
+      pushReps(raw, { ...base, exerciseId: 'fast', exerciseLabel: FAST_LABEL }, phase.fastReps, [
+        { kind: 'tension', durationSec: FAST_TENSION_SEC },
+        { kind: 'relax', durationSec: FAST_RELAX_SEC },
+      ]);
     }
+
+    pushReps(raw, { ...base, exerciseId: 'reverse', exerciseLabel: REVERSE_LABEL }, REVERSE_REPS, [
+      { kind: 'reverse', durationSec: REVERSE_INHALE_SEC },
+      { kind: 'exhale', durationSec: REVERSE_EXHALE_SEC },
+    ]);
+
     if (set < totalSets) {
-      raw.push(restStep(exerciseId, exerciseLabel, 'setRest', set + 1, totalSets, setRestSec));
+      // Rest step carries the NEXT series' position so the runner can say where to move.
+      raw.push({
+        exerciseId: 'reverse',
+        exerciseLabel: 'Przerwa między seriami',
+        kind: 'setRest',
+        position: phase.positions[set],
+        setIndex: set + 1,
+        totalSets,
+        repIndex: 0,
+        totalReps: 0,
+        durationMs: SERIES_REST_SEC * 1000,
+      });
     }
   }
-}
 
-const WARMUP_LABEL = 'Rozgrzewka — reverse Kegel';
-
-function pushWarmup(raw: RawStep[]): void {
-  for (let rep = 1; rep <= WARMUP_REPS; rep++) {
-    raw.push({ exerciseId: 'warmup', exerciseLabel: WARMUP_LABEL, kind: 'tension', setIndex: 1, totalSets: 1, repIndex: rep, totalReps: WARMUP_REPS, durationMs: WARMUP_TENSION_SEC * 1000 });
-    raw.push({ exerciseId: 'warmup', exerciseLabel: WARMUP_LABEL, kind: 'relax', setIndex: 1, totalSets: 1, repIndex: rep, totalReps: WARMUP_REPS, durationMs: WARMUP_RELAX_SEC * 1000 });
-  }
-  raw.push(restStep('warmup', WARMUP_LABEL, 'exerciseRest', 1, 1, EXERCISE_REST_SEC));
-}
-
-function buildStrengthSteps(level: KegelLevelConfig): RawStep[] {
-  const raw: RawStep[] = [];
-  pushWarmup(raw);
-
-  const fastLabel = 'Szybkie skurcze';
-  pushSets(raw, 'fast', fastLabel, level.fast.sets, level.fast.reps, [
-    { kind: 'tension', durationMs: FAST_TENSION_SEC * 1000 },
-    { kind: 'relax', durationMs: FAST_RELAX_SEC * 1000 },
-  ]);
-  raw.push(restStep('fast', fastLabel, 'exerciseRest', level.fast.sets, level.fast.sets, EXERCISE_REST_SEC));
-
-  const longLabel = 'Skurcze długie';
-  pushSets(raw, 'long', longLabel, level.long.sets, level.long.reps, [
-    { kind: 'tension', durationMs: level.long.tensionSec * 1000 },
-    { kind: 'relax', durationMs: LONG_RELAX_SEC * 1000 },
-  ]);
-  raw.push(restStep('long', longLabel, 'exerciseRest', level.long.sets, level.long.sets, EXERCISE_REST_SEC));
-
-  const elevatorLabel = 'Skurcze progresywne (elevator)';
-  pushSets(raw, 'elevator', elevatorLabel, level.elevator.sets, level.elevator.reps, [
-    { kind: 'stage1', durationMs: level.elevator.stageHoldSec * 1000 },
-    { kind: 'stage2', durationMs: level.elevator.stageHoldSec * 1000 },
-    { kind: 'stage3', durationMs: level.elevator.stageHoldSec * 1000 },
-    { kind: 'elevatorRelax', durationMs: ELEVATOR_RELAX_SEC * 1000 },
-  ]);
-  // No rest after the last exercise — the session ends here.
-
-  return raw;
-}
-
-function buildEnduranceSteps(level: KegelLevelConfig): RawStep[] {
-  const raw: RawStep[] = [];
-  pushWarmup(raw);
-
-  const enduranceLabel = 'Skurcze wytrzymałościowe (~50% siły)';
-  pushSets(
-    raw,
-    'endurance',
-    enduranceLabel,
-    level.endurance.sets,
-    1, // one long hold per set, not a rep loop
-    [
-      { kind: 'tension', durationMs: level.endurance.holdSec * 1000 },
-      { kind: 'relax', durationMs: ENDURANCE_RELAX_SEC * 1000 },
-    ],
-    ENDURANCE_SET_REST_SEC
-  );
-  // No rest after the last set — the session ends here.
-
-  return raw;
-}
-
-/** Expands a level config + session type into the full ordered list of steps for one session. */
-export function buildSteps(level: KegelLevelConfig, sessionType: KegelSessionType): KegelStep[] {
-  const raw = sessionType === 'endurance' ? buildEnduranceSteps(level) : buildStrengthSteps(level);
   return raw.map((step, i) => ({ ...step, index: i, total: raw.length }));
 }

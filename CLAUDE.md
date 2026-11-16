@@ -32,6 +32,9 @@ src/
     calendar/   Kalendarz treningów — calendarEngine.ts (czyste funkcje: siatka
                 miesiąca, tydzień od poniedziałku), CalendarPage (miesiąc +
                 podsumowanie tygodnia)
+    kegel/      Trening dna miednicy — kegelEngine.ts (czyste funkcje: fazy,
+                progresja, buildSteps), kegelStore.ts (Zustand, ten sam
+                sekwencer co trening), KegelPage/KegelRunnerScreen
 ```
 
 ## Key Business Rules
@@ -70,6 +73,15 @@ src/
   fazę `finished` (guard przez `useRef`, żeby nie zdublować wpisu przy
   re-renderach). `CalendarPage` czyta cały log i liczy dni/tydzień lokalnie —
   brak agregacji po stronie bazy.
+- Kegel (`kegelEngine.ts`): jeden 12-tygodniowy protokół PFMT, 4 fazy —
+  nauka → siła → funkcja → utrzymanie (`KEGEL_PHASES`). Wejście w fazę wymaga
+  JEDNOCZEŚNIE tygodnia od pierwszej sesji i liczby unikalnych dni
+  treningowych (`KEGEL_PHASE_GATES`), więc przerwa wstrzymuje progresję.
+  1 sesja dziennie (Start zablokowany po dzisiejszym wpisie), maks. 45
+  skurczów (`MAX_DAILY_CONTRACTIONS`), rozluźnienie ≥ czas skurczu, każda
+  seria kończy się reverse Kegel (profilaktyka hipertonii). Brak osobnych
+  sesji endurance/elevator — świadomie usunięte. `kegel_logs.level` = numer
+  fazy (stare wiersze: dawne poziomy 1–6, ignorowane przy liczeniu fazy).
 
 ## Database
 

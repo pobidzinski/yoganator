@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { supabase } from '../../lib/supabase';
 import { formatSeconds } from '../../lib/time';
-import { KEGEL_STEP_KIND_LABELS } from './kegelEngine';
+import { KEGEL_POSITION_LABELS, KEGEL_STEP_KIND_LABELS } from './kegelEngine';
 import { useKegelStore } from './kegelStore';
 
 const TICK_MS = 250;
 
-const REST_KINDS = new Set(['setRest', 'exerciseRest']);
-const RELAX_KINDS = new Set(['relax', 'elevatorRelax']);
+const RELAX_KINDS = new Set(['relax', 'exhale']);
 
 export default function KegelRunnerScreen() {
-  const levelNumber = useKegelStore((s) => s.levelNumber);
-  const sessionType = useKegelStore((s) => s.sessionType);
+  const phaseNumber = useKegelStore((s) => s.phaseNumber);
   const steps = useKegelStore((s) => s.steps);
   const stepIndex = useKegelStore((s) => s.stepIndex);
   const status = useKegelStore((s) => s.status);
@@ -62,9 +60,9 @@ export default function KegelRunnerScreen() {
     loggedFinishRef.current = true;
     supabase
       .from('kegel_logs')
-      .insert({ level: levelNumber, session_type: sessionType, completed_at: new Date().toISOString() })
+      .insert({ level: phaseNumber, completed_at: new Date().toISOString() })
       .then(({ error }) => { if (error) console.error(error); });
-  }, [status, levelNumber, sessionType]);
+  }, [status, phaseNumber]);
 
   if (status === 'finished') {
     return (
@@ -73,7 +71,7 @@ export default function KegelRunnerScreen() {
           <p className="text-5xl">🎉</p>
           <p className="text-xl font-heading font-semibold text-ink">Trening ukończony!</p>
           <p className="text-sm text-ink-muted">
-            {sessionType === 'strength' ? 'Trening siłowy' : 'Trening endurance'} — poziom {levelNumber} zaliczony.
+            Faza {phaseNumber} — sesja zaliczona. Kolejna jutro.
           </p>
           <button
             onClick={reset}
@@ -98,14 +96,25 @@ export default function KegelRunnerScreen() {
   const totalStepMs = currentStep.durationMs;
   const progress = totalStepMs > 0 ? 1 - remainingMs / totalStepMs : 0;
 
-  const isRest = REST_KINDS.has(currentStep.kind);
+  const isRest = currentStep.kind === 'setRest';
+  const isReverse = currentStep.kind === 'reverse';
   const isRelax = RELAX_KINDS.has(currentStep.kind);
   const badgeClass = isRest
-    ? 'bg-orange-400/15 text-orange-300'
+    ? 'bg-surface-hover text-ink'
+    : isReverse
+    ? 'bg-accent-2/15 text-accent-2'
     : isRelax
     ? 'bg-surface-hover text-ink-muted'
     : 'bg-accent/15 text-accent';
-  const barClass = isRest ? 'h-full bg-orange-400' : 'h-full bg-accent';
+  const barClass = isRest ? 'h-full bg-ink-muted' : isReverse ? 'h-full bg-accent-2' : 'h-full bg-accent';
+  const cue =
+    currentStep.kind === 'tension'
+      ? 'Pośladki i brzuch luźne · oddychaj swobodnie'
+      : isReverse
+      ? 'Wdech — rozluźnij i opuść krocze'
+      : isRest
+      ? `Następna seria: ${KEGEL_POSITION_LABELS[currentStep.position]}`
+      : null;
 
   return (
     <div className="flex flex-col min-h-full p-4 max-w-md mx-auto">
@@ -117,7 +126,7 @@ export default function KegelRunnerScreen() {
           ←
         </button>
         <h1 className="text-lg font-heading font-semibold text-ink tracking-tight truncate flex-1">
-          Kegel — {sessionType === 'strength' ? 'Siła' : 'Endurance'} — poziom {levelNumber}
+          Kegel — faza {phaseNumber}
         </h1>
       </div>
 
@@ -129,16 +138,21 @@ export default function KegelRunnerScreen() {
         <div>
           <p className="text-lg font-bold text-ink">{currentStep.exerciseLabel}</p>
           {currentStep.repIndex > 0 && (
-            <p className="text-xs text-ink-muted mt-1">
-              Seria {currentStep.setIndex}/{currentStep.totalSets}
-              {currentStep.totalReps > 1 ? ` · Powt. ${currentStep.repIndex}/${currentStep.totalReps}` : ''}
-            </p>
+            <>
+              <p className="text-xs text-ink-muted mt-1">
+                Seria {currentStep.setIndex}/{currentStep.totalSets}
+                {currentStep.totalReps > 1 ? ` · Powt. ${currentStep.repIndex}/${currentStep.totalReps}` : ''}
+              </p>
+              <p className="text-xs text-ink-muted mt-0.5">{KEGEL_POSITION_LABELS[currentStep.position]}</p>
+            </>
           )}
         </div>
 
         <span className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ${badgeClass}`}>
           {KEGEL_STEP_KIND_LABELS[currentStep.kind]}
         </span>
+
+        {cue && <p className="text-sm text-ink-muted">{cue}</p>}
 
         {isPaused && <p className="text-sm font-bold text-ink-muted">PAUZA</p>}
 
